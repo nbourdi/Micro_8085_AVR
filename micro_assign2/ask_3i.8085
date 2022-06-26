@@ -1,0 +1,30 @@
+; (3i)
+
+START:
+	LDA 2000H
+	MVI B,09H	
+ROT:				; loop to find the first ON switch
+	DCR B   
+	JZ NOLEDS		; there are no switches on
+	RAL 
+	JNC ROT
+	
+	MVI A,09H
+	SUB B			
+	MOV B,A		;(B) = how many leds we want ON
+	MVI A,00H
+OUTP:				; we add (B) ones on the left
+	RRC
+	ORI 80H		; 80H is 10000000
+	DCR B
+	JNZ OUTP
+
+	CMA				; reverse LED logic
+	STA 3000H
+	JMP START
+NOLEDS: 			; turn off all leds if no switch is ON
+	MVI A,FFH
+	STA 3000H
+	JMP START
+
+	END

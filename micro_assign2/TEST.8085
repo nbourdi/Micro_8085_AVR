@@ -1,0 +1,70 @@
+IN 10H
+MVI A,1DH
+SIM
+EI
+
+MVI C,40H        ; 64 DEC
+MVI D,80H        ; 128 DEC
+MVI E,C0H        ; 192 DEC
+LOOP1:
+    JMP LOOP1
+
+INTR_ROUTINE:
+    CALL KIND        ; (A) <- character code
+    ANI 0FH
+    RLC
+    RLC
+    RLC
+    RLC
+    MOV B,A
+    CALL KIND
+    ANI 0FH
+    ADD B        ; (A) <- both hex digits
+
+LEDS:
+    CPI C0H
+    JZ LED2
+    CMP E
+    JNC LED3
+    CPI 80H
+    JZ LED1
+    CMP D
+    JNC LED2
+    CPI 40H
+    JZ LED0
+    CMP C
+    JNC LED1
+    JMP LED0
+LED3: 
+    MVI A,08H
+    CMA
+    STA 3000H
+    JMP EXIT
+LED0:
+    MVI A,01H
+    CMA 
+    STA 3000H
+    JMP EXIT
+
+LED1:
+    MVI A,02H
+    CMA
+    STA 3000H
+    JMP EXIT
+LED2:
+    MVI A,04H
+    CMA
+    STA 3000H
+    JMP EXIT
+EXIT:
+    PUSH B
+    LXI B,01F4H
+    CALL DELB            ; to view leds
+    POP B
+    MVI A,FFH  ; reset leds
+    STA 3000H
+    MVI A,1DH 
+    SIM
+    EI
+    RET
+END

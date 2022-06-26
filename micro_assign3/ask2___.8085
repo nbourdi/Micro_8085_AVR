@@ -1,0 +1,107 @@
+IN 10H
+
+MVI A,10H		; empty character code
+STA 0B00H		
+STA 0B01H
+STA 0B02H		; will place low digit here
+STA 0B03H		; high digit
+STA 0B04H
+STA 0B05H
+
+
+MVI A,1DH
+SIM
+EI
+
+MVI C,40H      	; 64 DEC
+MVI D,80H        	; 128 DEC
+MVI E,C0H        	; 192 DEC
+
+LOOP1:
+    ;CALL DCD
+    JMP LOOP1
+
+INTR_ROUTINE:
+    PUSH B
+    PUSH D		; saving register values...
+    STA 0B02H		; will place low digit here
+    STA 0B03H		; will place high digit here
+    LXI D,0B00H
+    CALL STDM
+    CALL KIND    	; A <- digit pressed (high)
+    ANI 0FH
+    STA 0B03H		; placing high digit for displaying later
+    RLC
+    RLC
+    RLC
+    RLC
+    MOV H,A
+    CALL KIND		; A <- digit pressed (low)
+    ANI 0FH
+    STA 0B02H		; placing low digit for displaying later
+    ORA H    		; A now has both digits    
+
+LEDS:
+    POP D
+    POP B		; restoring C,D,E values to check for the LEDs
+    CMP E
+    JZ LED2
+    CMP E       
+    JNC LED3
+    CMP D
+    JZ LED1
+    CMP D
+    JNC LED2
+    CMP C
+    JZ LED0
+    CMP C
+    JNC LED1
+    JMP LED0
+
+LED0:
+    MVI A,FEH 
+    STA 3000H
+    JMP EXIT
+LED3: 
+    MVI A,F7H
+    STA 3000H
+    JMP EXIT
+LED1:
+    MVI A,FDH
+    STA 3000H
+    JMP EXIT
+LED2:
+    MVI A,FBH
+    STA 3000H
+    JMP EXIT
+
+DELB_:			;~500ms delay με συνεχη ανανεωση των 7-segment displays (καθε 10msec)
+    MVI A,32H		;50x10msec delays
+    DELB_LOOP:
+    CALL DELB
+    CALL DCD
+    DCR A
+    JNZ DELB_LOOP
+    RET
+
+
+EXIT:
+    PUSH D
+    PUSH B		; saving registers again...
+    LXI D,0B00H	; for STDM
+    CALL STDM
+    CALL DCD
+	
+    LXI B,000AH	; 10msec delay for DELB (see DELB_ for the final delay duration)
+    CALL DELB_  	; to view leds
+
+    MVI A,FFH  	; reset leds
+    STA 3000H
+    POP B
+    POP D		; restore registers...
+
+    MVI A,1DH 	; initialize interrupts
+    SIM
+    EI
+    RET
+END

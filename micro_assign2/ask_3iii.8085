@@ -1,0 +1,135 @@
+;(3iii)
+	IN 10H
+SCAN0:
+	MVI A,FEH	 	; line 0
+	STA 2800H		; scan line0
+	LDA 1800H		; load the results to A
+	ANI 07H		; isolate 3 lsbs
+	MVI B,86H		; the char code of INSTR STEP
+	CPI 06H
+	JZ 	OUTP		; INSTR STEP
+	MVI B,85H
+	CPI 05H 
+	JZ OUTP		; FETCH PC
+SCAN1:
+	MVI A,FDH 
+	STA 2800H
+	LDA 1800H
+	ANI 07H		; isolate 3 lsbs
+	MVI B,82H
+	CPI 03H
+	JZ OUTP		; FETCH ADDRESS
+	MVI B,80H
+	CPI 05H
+	JZ OUTP		; FETCH REG
+	MVI B,84H
+	CPI 06H
+	JZ OUTP   	; RUN
+SCAN2:
+	MVI A,FBH
+	STA  2800H
+	LDA 1800H
+	ANI 07H		; isolate 3 lsbs
+	MVI B,81H
+	CPI 03H
+	JZ 	 OUTP		; DECR
+	MVI B,83H
+	CPI 05H
+	JZ 	OUTP		; STINCR
+	MVI B,00H
+	CPI 06H
+	JZ 	OUTP		; 0
+SCAN3:
+	MVI A,F7H
+	STA  2800H
+	LDA 1800H
+	ANI 07H		; isolate 3 lsbs
+	MVI B,03H
+	CPI 03H
+	JZ OUTP		; 3
+	MVI B,02H
+	CPI 05H
+	JZ OUTP		; 2
+	MVI B,01H
+	CPI 06H
+	JZ 	OUTP		; 1 
+SCAN4:
+	MVI A,EFH
+	STA  2800H
+	LDA 1800H
+	ANI 07H		; isolate 3 lsbs
+	MVI B,06H
+	CPI 03H
+	JZ OUTP		; 6
+	MVI B,05H
+	CPI 05H
+	JZ 	OUTP		; 5
+	MVI B,04H
+	CPI 06H
+	JZ 	OUTP		; 4 
+SCAN5:
+	MVI A,DFH
+	STA  2800H
+	LDA 1800H
+	ANI 07H		; isolate 3 lsbs
+	MVI B,09H
+	CPI 03H
+	JZ 	OUTP		; 9
+	MVI B,08H
+	CPI 05H
+	JZ 	OUTP		; 8
+	MVI B,07H
+	CPI 06H
+	JZ 	OUTP		; 7 
+SCAN6:
+	MVI A,BFH
+	STA 2800H
+	LDA 1800H
+	ANI 07H		; isolate 3 lsbs
+	MVI B,0CH
+	CPI 03H
+	JZ 	OUTP		; C
+	MVI B,0BH
+	CPI 05H
+	JZ 	OUTP		; B
+	MVI B,0AH
+	CPI 06H
+	JZ 	OUTP		; A 
+SCAN7:
+	MVI A,7FH
+	STA 2800H
+	LDA 1800H
+	ANI 07H		; isolate 3 lsbs
+	MVI B,0FH
+	CPI 03H
+	JZ 	OUTP		; F
+	MVI B,0EH
+	CPI 05H
+	JZ 	OUTP		; E
+	MVI B,0DH
+	CPI 06H
+	JZ 	OUTP		; D
+	JMP SCAN0
+
+OUTP:
+	MOV A,B		; character code in A
+	ANI 0FH		; isolate the 4 LSBs
+	STA 0B00H		; put them in the 5th display slot
+	MOV A,B
+	ANI F0H		; isolate the 4 MSBs
+	RLC
+	RLC
+	RLC
+	RLC
+	STA 0B01H		; put them in the 6th display slot
+	MVI A,10H		; spaces in the 4 rightmost slots 
+	STA 0AFCH		
+	STA 0AFDH
+	STA 0AFEH
+	STA 0AFFH		
+	LXI D,0AFCH	; our data is at 0AFCH - 0B001H
+	CALL STDM
+	CALL DCD
+
+	JMP SCAN0
+	END

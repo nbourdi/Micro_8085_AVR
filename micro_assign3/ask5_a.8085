@@ -1,0 +1,62 @@
+
+; Initialize registers
+MVI B,00H		; Overflow counter
+MVI C,00H		; Sum of the inputs
+MVI E,20H		; Counter for the 32 reads
+LXI H,9000H 
+
+
+LOOP:
+JMP LOOP		; Wait for interrupts
+
+
+RST5.5:		; Interrupt routine
+	IN 20H		; Read 4 digits from the device
+	MOV M,A	; Store them in memory
+	INX H		; Increase the address
+	DCR E		; Decrement counter
+	JZ EXIT	; Exit if all data is read
+	RET		; Else return
+
+LXI H,9000H		; Restore to the initial address
+MVI E,10H		; Counter for the 16 numbers to be summed
+
+EXIT:
+
+SUM:
+	MOV A,M	; Read 4 LSBs from memory	
+	RRC
+	RRC
+	RRC
+	RRC		; put LSBs in the correct position
+	MOV D,A	; Store them temporarily
+	INX H		; Increase memory address
+	MOV A,M	; Read 4 MSBs from memory
+	INX H		; Increase memory address
+	ORA D		; Now A has the whole number
+	ADD C		; Add to the sum
+	JNC CONT	; If there is overflow increment B
+	INR B
+CONT:
+	MOV C,A	; Store the sum in C
+	DCR E		
+	JNZ SUM	; If all 16 numbers are summed, continue
+
+
+; The sum is now stored in the B,C register pair; we need to divide it by 16
+STC
+CMC		; Clear carry
+MVI E,04H	; 4 right rotations are needed to divide the sum by 16
+DIVIDE:
+	MOV A,B
+	RAR		; Rotate B through carry
+	MOV B,A
+	MOV A,C
+	RAR		; Rotate C through carry
+	MOV C,A	; Now the value stored in the pair has been divided by 2
+	DCR E
+	JNZ DIVIDE
+
+MOV A,C
+;Now A has the result!
+RET			; To return from the interrupt routine

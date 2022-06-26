@@ -1,0 +1,106 @@
+IN 10H
+LXI B,000AH 		;10ms delay
+MVI E,00H
+MVI A,1DH 		; Αρχικοποίηση διακοπών
+SIM ; 
+EI
+
+LOOP1:
+MVI A,FFH 		;LEDs OFF
+STA 3000H
+JMP LOOP1
+
+INTR_ROUTINE:
+MVI D,2EH 		;Μετρητης αλλαγων καταστασης των LEDs (2D=45)
+
+
+REPEAT:
+CALL BLINK
+CALL PRINT
+CALL DELB_
+CALL BLINK
+CALL DELB_
+DCR D
+JZ END_
+JMP REPEAT
+
+END_:
+MVI A,1DH 		; Αρχικοποίηση διακοπών
+SIM
+EI
+RET
+
+
+
+BLINK: 		;Αλλαγη καταστασης των LEDs
+MOV A,E
+STA 3000H
+CMA
+MOV E,A
+RET
+
+
+
+DELB_:			;500ms delay με συνεχη ανανεωση των 7-segment displays (καθε 10msec)
+MVI A,32H		;50x10msec delays
+DELB_LOOP:
+CALL DELB
+CALL DCD
+DCR A
+JNZ DELB_LOOP
+RET
+
+
+
+PRINT: 		;εμφανιζουμε το περιεχομενο του καταχωρητη D στα δυο 7-segment displays
+CALL SPACES
+LXI H,0905H		;δειυθυνση που θα γραφούν τα συμβολα προς απεικονιση
+
+PUSH B
+PUSH D
+MVI B,00H		;Κραταει δεκαδες
+MVI C,00H		;Κραταει μοναδες
+
+CONVERT:
+DCR D			;Μειωνουμε τον D
+JZ CONT
+CALL DEC_		;Αυξανουμε το ζευγος B,C
+JMP CONVERT
+
+DEC_:			;Σε καθε επαναληψη αφαιρουμε 1 απο τον D
+INR C			;και προσθετουμε 1 στο ζευγος B,C σε δεκαδικη αναπαρασταση
+MOV A,C
+CPI 0AH
+JNZ RET_		
+INR B
+MVI C,00H
+RET_:
+RET
+
+CONT:
+MOV M,B		;store B to memory
+DCX H			;move pointer to the other address
+MOV M,C		;store C
+LXI D,0900H		;Διευθυνση μνημης από όπου θα διαβασουν οι STDM και DCD
+CALL STDM
+CALL DCD		;απεικονιση με χρηση των STDM, DCD
+POP D
+POP B
+RET	
+
+SPACES:		;Αρχικοποιηση με κενα στα ψηφια που θα τυπωνονται 
+LXI H,0900H		;χρησιμοποιουμε τη διευθυνση 0900Η
+MVI M,10H
+INX H
+MVI M,10H
+INX H
+MVI M,10H
+INX H
+MVI M,10H
+INX H
+MVI M,10H
+INX H
+MVI M,10H		
+RET
+
+END

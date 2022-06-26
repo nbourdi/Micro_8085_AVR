@@ -1,0 +1,31 @@
+INR16 MACRO ADDR
+	PUSH H		; Αποθηκευουμε το περιεχομενο των H,L στη στοιβα
+	LXI H,ADDR	; H,L<-ADDR
+	MOV M,A	; A<-(ADDR)
+	ADI 01H	; Αυξανουμε το Xlow (Το CY γινεται 1 σε περιπτωση υπερχειλισης)
+	MOV M,A	; (ADDR)<-Α
+	INX H		; Αυξανουμε την τιμη του ζευγους H,L
+	MOV A,M	; A<-(ADDR+1)
+	ACI 00H	; Προσθετουμε το κρατουμενο σε περιπτωση υπερχειλισης
+	MOV M,A	; (ADDR+1)<-Α
+	POP H		; Επαναφέρουμε τους καταχωρητές H,L
+	ENDM
+
+FILL MACRO ADDR,K
+	LXI H,ADDR	; H,L<-ADDR
+	MVI A,K	; A<-K
+	REPEAT:
+	MOV M,A	; ((H),(L))<-A
+	INX H		; Αυξανουμε την τιμη του ζευγους H,L
+	DCR A		; Μειωνουμε την τιμη του A
+	JNZ REPEAT	; Αν Α=0 τελος
+	ENDM
+
+RHLL MACRO Q,R
+	MOV A,R
+	RAL		; Περιστροφη του R αριστερα μεσω κρατουμενου
+	MOV R,A	; R0<-CY και CY<-R7
+	MOV A,Q
+	RAL		; Περιστροφη του Q αριστερα μεσω κρατουμενου
+	MOV Q,A	; Q0<-R7 και CY<-Q7
+	ENDM

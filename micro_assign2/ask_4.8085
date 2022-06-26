@@ -1,0 +1,46 @@
+;(4)
+
+START:
+	LDA 2000H
+	MOV B,A  ; B holds dip switches state
+	RAR 
+	ORA B	   ; the 2 OR gates
+	MOV D,A  ; X1 in bit 2
+	RAR
+	RAR
+	ANA D		; x1 AND (A0 or B0)
+	MOV E,A	; X0 in lsb
+	MOV A,B	; dip switch state in A again
+	RAR
+	ANA B  	; the 2 AND gates on the left
+	MOV C,A  ; X2 in bit 4
+	RAR
+	RAR
+	XRA C		; the XOR gate
+	MOV B,A 	; X3 in bit 4
+
+	MVI A,01H    
+	ANA E  	; isolate X0
+	MOV E,A
+	MVI A,04H
+	ANA D  	; isolate X1
+	RAR		 	; put it in bit 1
+	ORA E
+	MOV D,A
+	
+	MVI A,10H 
+	ANA C		; isolate X2
+	RAR 
+	RAR
+	ORA D		; put it in bit 2
+	MOV C,A
+
+	MVI A,10H
+	ANA B		; isolate X3
+	RAR
+	ORA C		; put it in bit 4
+	CMA			; LEDs in reverse logic
+	STA 3000H
+	
+	JMP START
+	END

@@ -1,0 +1,67 @@
+	LXI B,00CBH  	; 200ms delb
+	
+START:
+	LDA 2000H		; load dip switches
+	RAR 			; to get lsb
+	JC START		; if on, go to start
+L1:	 ; its on after off
+	LDA 2000H
+	RAR
+	JNC L1		; if still off, go to L1 looking again
+L2:
+	LDA 2000H		
+	RAR
+	JC L2   		; if it’s on after on
+	;if we reached here it's OFF-ON-OFF
+TIMER_ON:
+	MVI D,4BH		; 75x200ms = 15s
+	MVI H,05H		; counter to reverse leds every second
+	MVI E,FFH
+TSTART:
+	CALL DELB 		; introduce 200ms delay
+	DCR D			; decrease the counter
+	JZ START		; 15 seconds passed, go to START
+	DCR H
+	JNZ CONT		
+	MOV A,E		; reverse leds if a second has passed
+	CMA
+	MOV E,A
+	STA 3000H
+	MVI H,05H
+CONT:
+	LDA 2000H		; load dip switches
+	RAR 			; to get lsb
+	JC TSTART		; if on, go to start
+TL1:
+	CALL DELB 		; introduce 200ms delay
+	DCR D			; decrease the timer counter
+	JZ L1
+	DCR H
+	JNZ CONT2
+	MOV A,E
+	CMA
+	MOV E,A
+	STA 3000H
+	MVI H,05H
+CONT2:
+	LDA 2000H
+	RAR
+	JNC TL1		; if still off, go to TL1 looking again
+TL2:
+	CALL DELB 		
+	DCR D			
+	JZ L2
+	DCR H
+	JNZ CONT3
+	MOV A,E
+	CMA
+	MOV E,A
+	STA 3000H
+	MVI H,05H
+CONT3:
+	LDA 2000H		
+	RAR
+	JC TL2  		; if it’s on after on
+	JMP TIMER_ON	; restart timer
+
+	END

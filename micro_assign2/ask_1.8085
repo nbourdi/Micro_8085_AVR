@@ -1,0 +1,49 @@
+	IN 10H 
+
+	LXI H,0900H
+	LXI D,0000H ; initialize counter of zeros
+	MVI B,00H   ; limit
+	MVI A,FFH   ; initialize to 255
+DO: 
+	CMP B
+	MOV M,A   
+	JZ LB       ; (A) = 0 => LB
+	SUI 01H  
+	INX H       ; next memory address 
+	JMP DO
+
+LB:        	 ; (b)
+	MOV A,M
+	MVI C,09H	; 8 bits -> 8 iterations
+ROT:	
+	DCR C
+	JZ DONE	; (C)=0 => next number
+	RRC
+	JC ROT     ; IF CY = 0 COUNT IT 
+COUNT: 	
+	INX D		; count a zero
+	JMP ROT
+DONE:
+	DCR L		; previous memory address
+	JNZ LB	
+	;RST 1	; interrupt to check D-E register
+
+  
+	;(g)
+	MVI C,00H  ; initialize counter
+	MVI B,FFH
+LG:
+	MOV A,M    ; at first: M = 0900 => A=255 and L = 00
+	INR L
+	DCR B
+	JZ FIN
+	CPI 71H    
+	JNC LG	; (A)>70H => next number
+	CPI 20H
+	JC LG		; (A)<20H => next number
+	INR C   	; within limits, count it
+	JMP LG
+
+FIN:
+	;RST 1    ; interrupt to check register C: expect 51H    
+	END
